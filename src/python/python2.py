@@ -14,25 +14,25 @@ AVG_BANDWIDTH = []
 MPI_ROOT_ID = 0
 VERIFY_MODE = 1
 
-def save_delay_times(comm_type):
-    f = open('p_delay'+comm_type+'.txt','w+')
+def save_delay_times():
+    f = open('p_delay.txt','w+')
     f.write("# X Y\n")
     for i in range(0,len(BUFFER_SIZES)):
         f.write(str(BUFFER_SIZES[i]) + " " + str(AVG_DELAY_TIMES[i]) + "\n")
     f.close()
 
 
-def save_bandwidth(comm_type):
-    f = open('p_bandwidth'+comm_type+'.txt','w+')
+def save_bandwidth():
+    f = open('p_bandwidth.txt','w+')
     f.write("# X Y\n")
     for i in range(0,len(BUFFER_SIZES)):
         f.write(str(BUFFER_SIZES[i]) + " " + str(AVG_BANDWIDTH[i]) + "\n")
     f.close()
 
-def performMPIbroadccast(broadcastBufferSize): #TODO: finish this
+def performMPIbroadccast(comm, broadcastBufferSize): #TODO: finish this
     return broadcastBufferSize
 
-def fillBroadcastBuffer(broadcastBufferSize): #TODO: finish this
+def fillBroadcastBuffer(comm, broadcastBufferSize): #TODO: finish this
     return broadcastBufferSize
 
 def save_results(comm_type):
@@ -47,16 +47,14 @@ def initialize_communication(comm_type):
 
     if comm.rank == MPI_ROOT_ID:
         if VERIFY_MODE == 1:
-            fillBroadcastBuffer(broadcastBufferSize)
+            fillBroadcastBuffer(comm, broadcastBufferSize)
         start_time = MPI.Wtime()
 
         for i in range(0, SEND_RECV_ITERATIONS):
-            performMPIbroadcast(broadcastBufferSize)
+            performMPIbroadcast(comm, broadcastBufferSize)
 
 def main():
-    #comm_type = read_command_line_arguments()
     initialize_communication(comm_type)
-
 
 if __name__ == "__main__":
     main()
