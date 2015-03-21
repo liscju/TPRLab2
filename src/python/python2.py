@@ -13,48 +13,70 @@ AVG_BANDWIDTH = []
 
 MPI_ROOT_ID = 0
 VERIFY_MODE = 1
+DATA_SIZE = 16
 
-def save_delay_times():
-    f = open('p_delay.txt','w+')
-    f.write("# X Y\n")
-    for i in range(0,len(BUFFER_SIZES)):
-        f.write(str(BUFFER_SIZES[i]) + " " + str(AVG_DELAY_TIMES[i]) + "\n")
-    f.close()
+broadcastBuffer = 0;
+
+def fillBroadcastBuffer(size)
+    for i in range(0, size)
+        broadcastBuffer[i] = 'a'
 
 
-def save_bandwidth():
-    f = open('p_bandwidth.txt','w+')
-    f.write("# X Y\n")
-    for i in range(0,len(BUFFER_SIZES)):
-        f.write(str(BUFFER_SIZES[i]) + " " + str(AVG_BANDWIDTH[i]) + "\n")
-    f.close()
+def verifyBroadcast(): #implement
 
-def performMPIbroadccast(comm, broadcastBufferSize): #TODO: finish this
-    return broadcastBufferSize
 
-def fillBroadcastBuffer(comm, broadcastBufferSize): #TODO: finish this
-    return broadcastBufferSize
+def performSTDbroadcast(comm, broadcastBufferSize): #TODO: implement
 
-def save_results(comm_type):
-    save_delay_times(comm_type)
-    save_bandwidth(comm_type)
 
-def initialize_communication(comm_type):
+def performMPIbroadcast(comm, broadcastBufferSize): #TODO: fix
+    comm.bcast(broadcastBuffer, MPI_ROOT_ID)
+    count = 0
+    count = comm.gather(count, MPI_ROOT_ID)
+
+def initialize_communication():
     comm = MPI.COMM_WORLD
     if comm.size != 2:
-        print("Size must be equal 2")
+        print("Size must be equal to 2")
         exit(0)
 
-    if comm.rank == MPI_ROOT_ID:
-        if VERIFY_MODE == 1:
-            fillBroadcastBuffer(comm, broadcastBufferSize)
-        start_time = MPI.Wtime()
+    f1 = open('p_delayMPI.txt','w+')
+    f1.write("# X Y\n")
+    f2 = open('p_delaySTD.txt','w+')
+    f2.write("# X Y\n")
 
-        for i in range(0, SEND_RECV_ITERATIONS):
-            performMPIbroadcast(comm, broadcastBufferSize)
+    for i in range(0, DATA_SIZE)
+        broadcastBufferSize = BUFFER_SIZES[i]
+
+        if comm.rank == MPI_ROOT_ID:
+            if VERIFY_MODE == 1:
+                fillBroadcastBuffer(comm, broadcastBufferSize)
+            start_time = MPI.Wtime()
+
+        for j in range (0, ITERATION_COUNT)
+            performMPIbroadcast(comm, broadcastBufferSize);
+
+        if comm.rank == MPI_ROOT_ID:
+            endTime = MPI.Wtime()
+            #for i in range(0,len(BUFFER_SIZES)):
+            f1.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/ITERATION_COUNT) + "\n")
+            startTime = MPI_Wtime();
+
+        for j in range (0, ITERATION_COUNT)
+            performSTDbroadcast(comm, broadcastBufferSize);
+
+        if comm.rank == MPI_ROOT_ID:
+            endTime = MPI.Wtime()
+            #for i in range(0,len(BUFFER_SIZES)):
+            f2.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/ITERATION_COUNT) + "\n")
+            if VERIFY_MODE == 1
+                verifyBroadcast()
+
+    f1.close()
+    f2.close()
+    MPI.Finalize()
 
 def main():
-    initialize_communication(comm_type)
+    initialize_communication()
 
 if __name__ == "__main__":
     main()
