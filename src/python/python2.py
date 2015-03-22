@@ -67,7 +67,7 @@ def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer):
     return gatherBuffer
 
 def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
-    comm.bcast(broadcastBuffer, MPI_ROOT_ID)
+    broadcastBuffer = comm.bcast(broadcastBuffer, MPI_ROOT_ID)
     count = 0
 
     if VERIFY_MODE == 1:
@@ -130,6 +130,7 @@ def std_communication(broadcastBufferSize, comm, data, std_file):
 
 
 def initialize_data(broadcastBufferSize, comm):
+    data = None
     if comm.rank == MPI_ROOT_ID:
         if VERIFY_MODE == 1:
             data = array('c')
