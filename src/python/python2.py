@@ -75,42 +75,80 @@ def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
 
     count = comm.gather(count, MPI_ROOT_ID)
 
+def invoke_and_calculate_time(fun):
+    start_time = MPI.Wtime()
+    retVal = fun()
+    end_time = MPI.Wtime()
+    return (end_time - start_time),retVal
+
+
+def open_mpi_file(comm):
+    f1 = open('p_delayMPI' + str(comm.size) + '.txt', 'w+')
+    f1.write('#number_of_processors: ' + str(comm.size) + '\n')
+    f1.write("#data_size[B] time[s]\n")
+    return f1
+
+
+def open_std_file(comm):
+    f2 = open('p_delaySTD' + str(comm.size) + '.txt', 'w+')
+    f2.write('#number_of_processors: ' + str(comm.size) + '\n')
+    f2.write("#data_size[B] time[s]\n")
+    return f2
+
+
+def iterate_performMPIbroadcast(broadcastBufferSize, comm, data):
+    for j in range(0, SEND_RECV_ITERATIONS):
+        performMPIbroadcast(comm, broadcastBufferSize, data)
+
+
+def iterate_performSTDbroadcast(broadcastBufferSize, comm, data):
+    for j in range(0, SEND_RECV_ITERATIONS):
+        performSTDbroadcast(comm, broadcastBufferSize, data)
+
+
+def mpi_communication(broadcastBufferSize, comm, data, mpi_file):
+    if comm.rank == MPI_ROOT_ID:
+        execution_time,_ = invoke_and_calculate_time(
+            lambda: iterate_performMPIbroadcast(broadcastBufferSize, comm, data)
+        )
+        mpi_file.write(str(broadcastBufferSize) + " " + str(execution_time / SEND_RECV_ITERATIONS) + "\n")
+    else:
+        iterate_performMPIbroadcast(broadcastBufferSize, comm, data)
+
+
+def std_communication(broadcastBufferSize, comm, data, std_file):
+    if comm.rank == MPI_ROOT_ID:
+        gatherBuffer = array('i')
+        execution_time,gatherBuffer = invoke_and_calculate_time(
+            lambda: iterate_performSTDbroadcast(broadcastBufferSize, comm, data)
+        )
+        std_file.write(str(broadcastBufferSize) + " " + str(execution_time / SEND_RECV_ITERATIONS) + "\n")
+        if VERIFY_MODE == 1:
+            verifyBroadcast(comm,gatherBuffer)
+    else:
+        iterate_performSTDbroadcast(broadcastBufferSize, comm, data)
+
+
+def initialize_data(broadcastBufferSize, comm):
+    if comm.rank == MPI_ROOT_ID:
+        if VERIFY_MODE == 1:
+            data = array('c')
+            data = fillBroadcastBuffer(broadcastBufferSize, data)
+    return data
+
 
 def initialize_communication():
     comm = MPI.COMM_WORLD
-    f1 = open('p_delayMPI' + str(comm.size) + '.txt','w+')
-    f1.write('#number_of_processors: ' + str(comm.size) + '\n')
-    f1.write("#data_size[B] time[s]\n")
-    f2 = open('p_delaySTD' + str(comm.size) + '.txt','w+')
-    f2.write('#number_of_processors: ' + str(comm.size) + '\n')
-    f2.write("#data_size[B] time[s]\n")
+    mpi_file = open_mpi_file(comm)
+    std_file = open_std_file(comm)
     for i in range(0, DATA_SIZE):
         broadcastBufferSize = BUFFER_SIZES[i]
-        if comm.rank == MPI_ROOT_ID:
-            if VERIFY_MODE == 1:
-                data = array('c')
-                data = fillBroadcastBuffer(broadcastBufferSize, data)
-            startTime = MPI.Wtime()
+        data = initialize_data(broadcastBufferSize, comm)
+        mpi_communication(broadcastBufferSize, comm, data, mpi_file)
+        std_communication(broadcastBufferSize, comm, data, std_file)
 
-        for j in range (0, SEND_RECV_ITERATIONS):
-            performMPIbroadcast(comm, broadcastBufferSize, data)
-
-        if comm.rank == MPI_ROOT_ID:
-            endTime = MPI.Wtime()
-            f1.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/SEND_RECV_ITERATIONS) + "\n")
-            startTime = MPI.Wtime()
-        gatherBuffer = array('i')
-        for j in range (0, SEND_RECV_ITERATIONS):
-            gatherBuffer = performSTDbroadcast(comm, broadcastBufferSize, data)
-
-        if comm.rank == MPI_ROOT_ID:
-            endTime = MPI.Wtime()
-            f2.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/SEND_RECV_ITERATIONS) + "\n")
-            if VERIFY_MODE == 1:
-                verifyBroadcast(comm, gatherBuffer)
-
-    f1.close()
-    f2.close()
+    mpi_file.close()
+    std_file.close()
     MPI.Finalize()
 
 
