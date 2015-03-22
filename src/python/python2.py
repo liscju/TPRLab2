@@ -15,56 +15,56 @@ MPI_ROOT_ID = 0
 VERIFY_MODE = 1
 DATA_SIZE = 16
 
-broadcastBuffer = 0
+broadcastBuffer = bytearray
+gatherBuffer = bytearray
 
 def fillBroadcastBuffer(size):
-    for i in range(0, size)
+    for i in range(0, size):
         broadcastBuffer[i] = 'a'
     return broadcastBuffer
 
 
-def verifyBroadcast(comm): #implement
+def verifyBroadcast(comm, gatherBuffer): #implement
     print("Got: ")
-    for i in range(0, comm.size)
+    for i in range(0, comm.size):
         print(str(gatherBuffer[i]))
     print("\n")
 
-def countGatherBuffer(size):
+def countGatherBuffer(size, broadcastBuffer):
     count = 0
-    for i in range(0, size)
-        if broadcastBuffer[i] == 'a'
-            count++
+    for i in range(0, size):
+        if broadcastBuffer[i] == 'a':
+            count = count + 1
     return count
 
-def performSTDbroadcast(comm, broadcastBufferSize): #TODO: implement
+def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: implement
     count = 0
-
-    if(myId == MPI_ROOT_ID)
-        if VERIFY_MODE == 1
-            gatherBuffer[0] = size
-         else
+    if(comm.rank == MPI_ROOT_ID):
+        if VERIFY_MODE == 1:
+            gatherBuffer[0] = broadcastBufferSize
+        else:
             gatherBuffer[0] = 0
 
-        for i in range(1, numProcs)
+        for i in range(1, comm.size):
             comm.send(broadcastBuffer, i)
-     else
+    else:
         data = comm.recv(source = 0)
-        if VERIFY_MODE == 1
-            count = countGatherBuffer(size)
+        if VERIFY_MODE == 1:
+            count = countGatherBuffer(broadcastBufferSize, gatherBuffer)
 
         comm.send(count, 0)
 
-    if comm.rank == MPI_ROOT_ID
-        for i in range(1, numProcs)
+    if comm.rank == MPI_ROOT_ID:
+        for i in range(1, comm.size):
             count = comm.recv(source = i)
             gatherBuffer[i] = count
 
-def performMPIbroadcast(comm, broadcastBufferSize): #TODO: fix
+def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
     comm.bcast(broadcastBuffer, MPI_ROOT_ID)
     count = 0
 
-    if VERIFY_MODE == 1
-        count = countGatherBuffer(size)
+    if VERIFY_MODE == 1:
+        count = countGatherBuffer(broadcastBufferSize, broadcastBuffer)
 
     count = comm.gather(count, MPI_ROOT_ID)
 
@@ -78,32 +78,30 @@ def initialize_communication():
     f1.write("# X Y\n")
     f2 = open('p_delaySTD.txt','w+')
     f2.write("# X Y\n")
-
-    for i in range(0, DATA_SIZE)
+    data = bytearray
+    for i in range(0, DATA_SIZE):
         broadcastBufferSize = BUFFER_SIZES[i]
 
         if comm.rank == MPI_ROOT_ID:
             if VERIFY_MODE == 1:
-                data = fillBroadcastBuffer(comm, broadcastBufferSize)
+                data = fillBroadcastBuffer(broadcastBufferSize)
             start_time = MPI.Wtime()
 
-        for j in range (0, ITERATION_COUNT)
-            performMPIbroadcast(comm, broadcastBufferSize)
+        for j in range (0, SEND_RECV_ITERATIONS):
+            performMPIbroadcast(comm, broadcastBufferSize, data)
 
         if comm.rank == MPI_ROOT_ID:
             endTime = MPI.Wtime()
-            #for i in range(0,len(BUFFER_SIZES)):
-            f1.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/ITERATION_COUNT) + "\n")
-            startTime = MPI_Wtime()
+            f1.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/SEND_RECV_ITERATIONS) + "\n")
+            startTime = MPI.Wtime()
 
-        for j in range (0, ITERATION_COUNT)
-            performSTDbroadcast(comm, broadcastBufferSize)
+        for j in range (0, SEND_RECV_ITERATIONS)
+            performSTDbroadcast(comm, broadcastBufferSize, data)
 
         if comm.rank == MPI_ROOT_ID:
             endTime = MPI.Wtime()
-            #for i in range(0,len(BUFFER_SIZES)):
-            f2.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/ITERATION_COUNT) + "\n")
-            if VERIFY_MODE == 1
+            f2.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/SEND_RECV_ITERATIONS) + "\n")
+            if VERIFY_MODE == 1:
                 verifyBroadcast(comm)
 
     f1.close()
