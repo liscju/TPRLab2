@@ -18,6 +18,7 @@ DATA_SIZE = 16
 broadcastBuffer = bytearray()
 gatherBuffer = bytearray()
 
+
 def fillBroadcastBuffer(size, broadcastBuffer):
     for i in range(0, size):
         broadcastBuffer[i] = 'a'
@@ -30,12 +31,14 @@ def verifyBroadcast(comm, gatherBuffer):
         print(str(gatherBuffer[i]))
     print("\n")
 
+
 def countGatherBuffer(size, broadcastBuffer):
     count = 0
     for i in range(0, size):
         if broadcastBuffer[i] == 'a':
             count = count + 1
     return count
+
 
 def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer):
     count = 0
@@ -59,6 +62,7 @@ def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer):
             count = comm.recv(source = i)
             gatherBuffer[i] = count
 
+
 def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
     comm.bcast(broadcastBuffer, MPI_ROOT_ID)
     count = 0
@@ -67,6 +71,7 @@ def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
         count = countGatherBuffer(broadcastBufferSize, broadcastBuffer)
 
     count = comm.gather(count, MPI_ROOT_ID)
+
 
 def initialize_communication():
     comm = MPI.COMM_WORLD
@@ -83,7 +88,7 @@ def initialize_communication():
         if comm.rank == MPI_ROOT_ID:
             if VERIFY_MODE == 1:
                 data = fillBroadcastBuffer(broadcastBufferSize, data)
-            start_time = MPI.Wtime()
+            startTime = MPI.Wtime()
 
         for j in range (0, SEND_RECV_ITERATIONS):
             performMPIbroadcast(comm, broadcastBufferSize, data)
@@ -105,6 +110,7 @@ def initialize_communication():
     f1.close()
     f2.close()
     MPI.Finalize()
+
 
 def main():
     initialize_communication()
