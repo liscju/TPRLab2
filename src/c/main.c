@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 
 	freeBuffers();
 	closeFiles();
-	
+
 	MPI_Finalize();
 }
 

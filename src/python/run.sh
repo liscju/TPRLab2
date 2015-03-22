@@ -1,2 +1,1 @@
-mpiexec -n 2 python pingpong.py sync
-mpiexec -n 2 python pingpong.py asyn
+mpiexec -n 3 python python2.py
