@@ -70,10 +70,12 @@ def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
 
 def initialize_communication():
     comm = MPI.COMM_WORLD
-    f1 = open('p_delayMPI.txt','w+')
-    f1.write("# X Y\n")
-    f2 = open('p_delaySTD.txt','w+')
-    f2.write("# X Y\n")
+    f1 = open('p_delayMPI' + comm.size + '.txt','w+')
+    f1.write('#number_of_processors: ' + comm.size + '\n')
+    f1.write("#data_size[B] time[s]\n")
+    f2 = open('p_delaySTD' + comm.size + '.txt','w+')
+    f2.write('#number_of_processors: ' + comm.size + '\n')
+    f2.write("#data_size[B] time[s]\n")
     data = bytearray
     for i in range(0, DATA_SIZE):
         broadcastBufferSize = BUFFER_SIZES[i]
