@@ -70,10 +70,6 @@ def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
 
 def initialize_communication():
     comm = MPI.COMM_WORLD
-    if comm.size != 2:
-        print("Size must be equal to 2")
-        exit(0)
-
     f1 = open('p_delayMPI.txt','w+')
     f1.write("# X Y\n")
     f2 = open('p_delaySTD.txt','w+')
