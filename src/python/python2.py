@@ -15,50 +15,49 @@ MPI_ROOT_ID = 0
 VERIFY_MODE = 1
 DATA_SIZE = 16
 
-broadcastBuffer = 0;
+broadcastBuffer = 0
 
 def fillBroadcastBuffer(size):
     for i in range(0, size)
         broadcastBuffer[i] = 'a'
+    return broadcastBuffer
 
 
 def verifyBroadcast(comm): #implement
-    print("Got: ");
+    print("Got: ")
     for i in range(0, comm.size)
         print(str(gatherBuffer[i]))
     print("\n")
 
 def countGatherBuffer(size):
-    count = 0;
+    count = 0
     for i in range(0, size)
         if broadcastBuffer[i] == 'a'
-            count++;
-    return count;
+            count++
+    return count
 
 def performSTDbroadcast(comm, broadcastBufferSize): #TODO: implement
-    count = 0;
+    count = 0
 
     if(myId == MPI_ROOT_ID)
         if VERIFY_MODE == 1
-            gatherBuffer[0] = size;
+            gatherBuffer[0] = size
          else
-            gatherBuffer[0] = 0;
+            gatherBuffer[0] = 0
 
-        for i in range(1;numProcs)
-            MPI_Send(broadcastBuffer, size, MPI_CHAR, i, 0, MPI_COMM_WORLD);
+        for i in range(1, numProcs)
+            comm.send(broadcastBuffer, i)
      else
-        MPI_Recv(broadcastBuffer, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        data = comm.recv(source = 0)
         if VERIFY_MODE == 1
-            count = countGatherBuffer(size);
+            count = countGatherBuffer(size)
 
-        MPI_Send(&count, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        comm.send(count, 0)
 
     if comm.rank == MPI_ROOT_ID
         for i in range(1, numProcs)
-            MPI_Recv(&count, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            gatherBuffer[i] = count;
-
-
+            count = comm.recv(source = i)
+            gatherBuffer[i] = count
 
 def performMPIbroadcast(comm, broadcastBufferSize): #TODO: fix
     comm.bcast(broadcastBuffer, MPI_ROOT_ID)
@@ -85,20 +84,20 @@ def initialize_communication():
 
         if comm.rank == MPI_ROOT_ID:
             if VERIFY_MODE == 1:
-                fillBroadcastBuffer(comm, broadcastBufferSize)
+                data = fillBroadcastBuffer(comm, broadcastBufferSize)
             start_time = MPI.Wtime()
 
         for j in range (0, ITERATION_COUNT)
-            performMPIbroadcast(comm, broadcastBufferSize);
+            performMPIbroadcast(comm, broadcastBufferSize)
 
         if comm.rank == MPI_ROOT_ID:
             endTime = MPI.Wtime()
             #for i in range(0,len(BUFFER_SIZES)):
             f1.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/ITERATION_COUNT) + "\n")
-            startTime = MPI_Wtime();
+            startTime = MPI_Wtime()
 
         for j in range (0, ITERATION_COUNT)
-            performSTDbroadcast(comm, broadcastBufferSize);
+            performSTDbroadcast(comm, broadcastBufferSize)
 
         if comm.rank == MPI_ROOT_ID:
             endTime = MPI.Wtime()
