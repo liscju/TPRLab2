@@ -4,9 +4,9 @@ import socket
 import sys
 
 SEND_RECV_ITERATIONS = 100
-BUFFER_SIZES = [1000, 5000, 10000,20000,30000,50000,100000,
-              200000,300000,500000,1000000,2000000,3000000,
-              5000000,6000000,10000000]
+BUFFER_SIZES = [1000, 5000, 10000, 20000, 30000, 50000, 100000,
+                200000, 300000, 500000, 1000000, 2000000, 3000000,
+                5000000, 6000000, 10000000]
 
 AVG_DELAY_TIMES = []
 AVG_BANDWIDTH = []
@@ -18,13 +18,13 @@ DATA_SIZE = 16
 broadcastBuffer = bytearray
 gatherBuffer = bytearray
 
-def fillBroadcastBuffer(size):
+def fillBroadcastBuffer(size, broadcastBuffer):
     for i in range(0, size):
         broadcastBuffer[i] = 'a'
     return broadcastBuffer
 
 
-def verifyBroadcast(comm, gatherBuffer): #implement
+def verifyBroadcast(comm, gatherBuffer):
     print("Got: ")
     for i in range(0, comm.size):
         print(str(gatherBuffer[i]))
@@ -37,7 +37,7 @@ def countGatherBuffer(size, broadcastBuffer):
             count = count + 1
     return count
 
-def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: implement
+def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer):
     count = 0
     if(comm.rank == MPI_ROOT_ID):
         if VERIFY_MODE == 1:
@@ -82,7 +82,7 @@ def initialize_communication():
 
         if comm.rank == MPI_ROOT_ID:
             if VERIFY_MODE == 1:
-                data = fillBroadcastBuffer(broadcastBufferSize)
+                data = fillBroadcastBuffer(broadcastBufferSize, data)
             start_time = MPI.Wtime()
 
         for j in range (0, SEND_RECV_ITERATIONS):
@@ -93,7 +93,7 @@ def initialize_communication():
             f1.write(str(BUFFER_SIZES[i]) + " " + str((endTime-startTime)/SEND_RECV_ITERATIONS) + "\n")
             startTime = MPI.Wtime()
 
-        for j in range (0, SEND_RECV_ITERATIONS)
+        for j in range (0, SEND_RECV_ITERATIONS):
             performSTDbroadcast(comm, broadcastBufferSize, data)
 
         if comm.rank == MPI_ROOT_ID:
