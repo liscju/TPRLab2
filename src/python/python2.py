@@ -2,6 +2,7 @@ __author__ = 'bkumor'
 from mpi4py import MPI
 import socket
 import sys
+from array import array
 
 SEND_RECV_ITERATIONS = 100
 BUFFER_SIZES = [1000, 5000, 10000, 20000, 30000, 50000, 100000,
@@ -15,17 +16,17 @@ MPI_ROOT_ID = 0
 VERIFY_MODE = 1
 DATA_SIZE = 16
 
-broadcastBuffer = bytearray()
-gatherBuffer = bytearray()
+broadcastBuffer = array('c')
+gatherBuffer = array('i')
 
 
 def fillBroadcastBuffer(size, broadcastBuffer):
     for i in range(0, size):
-        broadcastBuffer[i] = 'a'
+        broadcastBuffer.append('a')
     return broadcastBuffer
 
 
-def verifyBroadcast(comm, gatherBuffer):
+def verifyBroadcast(comm):
     print("Got: ")
     for i in range(0, comm.size):
         print(str(gatherBuffer[i]))
@@ -44,9 +45,9 @@ def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer):
     count = 0
     if(comm.rank == MPI_ROOT_ID):
         if VERIFY_MODE == 1:
-            gatherBuffer[0] = broadcastBufferSize
+            gatherBuffer.append(broadcastBufferSize)
         else:
-            gatherBuffer[0] = 0
+            gatherBuffer.append(0)
 
         for i in range(1, comm.size):
             comm.send(broadcastBuffer, i)
@@ -60,7 +61,7 @@ def performSTDbroadcast(comm, broadcastBufferSize, broadcastBuffer):
     if comm.rank == MPI_ROOT_ID:
         for i in range(1, comm.size):
             count = comm.recv(source = i)
-            gatherBuffer[i] = count
+            gatherBuffer.append(count)
 
 
 def performMPIbroadcast(comm, broadcastBufferSize, broadcastBuffer): #TODO: fix
@@ -81,12 +82,11 @@ def initialize_communication():
     f2 = open('p_delaySTD' + str(comm.size) + '.txt','w+')
     f2.write('#number_of_processors: ' + str(comm.size) + '\n')
     f2.write("#data_size[B] time[s]\n")
-    data = bytearray()
     for i in range(0, DATA_SIZE):
         broadcastBufferSize = BUFFER_SIZES[i]
-
         if comm.rank == MPI_ROOT_ID:
             if VERIFY_MODE == 1:
+                data = array('c')
                 data = fillBroadcastBuffer(broadcastBufferSize, data)
             startTime = MPI.Wtime()
 
