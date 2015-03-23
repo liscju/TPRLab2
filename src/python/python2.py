@@ -13,7 +13,7 @@ AVG_DELAY_TIMES = []
 AVG_BANDWIDTH = []
 
 MPI_ROOT_ID = 0
-VERIFY_MODE = 1
+VERIFY_MODE = 0
 DATA_SIZE = 16
 
 #broadcastBuffer = array('c')
